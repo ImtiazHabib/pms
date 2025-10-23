@@ -14,20 +14,22 @@ class ProductController extends Controller
 {
      public function manage_product_page(Request $request){
 
-       $products = Product::query();
+      $products = Product::with('category');
 
-        if ($request->has('search')) {
-            $searchTerm = $request->get('search');
-            $products->where('name', 'like', '%' . $searchTerm . '%') // Search by 'name' column
-                     ->orWhere('description', 'like', '%' . $searchTerm . '%'); // Or search by 'description'
-            // Add more 'orWhere' clauses for other searchable columns
-        }
+    if ($request->filled('search')) {
+        $searchTerm = $request->input('search');
+        $products->where(function ($query) use ($searchTerm) {
+            $query->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+        });
+    }
 
-      // read all information of product with category
-      $products = Product::with('category')->paginate('2');
-        return view('manage_product',[
-         'products' => $products,
-        ]);
+    $products = $products->paginate(2);
+
+    return view('manage_product', [
+        'products' => $products,
+    ]);
+
      }
 
       public function create_product_page(){
